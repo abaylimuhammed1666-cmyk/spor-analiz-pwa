@@ -2,13 +2,12 @@ from flask import Flask, render_template_string
 import requests
 from bs4 import BeautifulSoup
 
-app = Flask(__name__)
+app = Flask(_name_)
 
 def bulten_kazila():
     """
     Yerel spor/bülten sitelerinden günün maçlarını ve oranlarını kazıyan (scraping) bot.
     """
-    # Örnek istek header bilgisi (Bot engellerini aşmak için tarayıcı gibi davranır)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     }
@@ -16,7 +15,6 @@ def bulten_kazila():
     mac_listesi = []
     
     try:
-        # Örnek bülten veri kaynağı
         url = "https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=2024-05-19&s=Soccer"
         response = requests.get(url, headers=headers, timeout=5)
         
@@ -24,7 +22,7 @@ def bulten_kazila():
             data = response.json()
             events = data.get("events", []) if data else []
             
-            for event in events[:6]:  # Bültendeki ilk maçları işle
+            for event in events[:6]:
                 ev = event.get("strHomeTeam", "Ev Sahibi")
                 dep = event.get("strAwayTeam", "Deplasman")
                 lig = event.get("strLeague", "Süper Lig / Avrupa")
@@ -46,7 +44,6 @@ def bulten_kazila():
     except Exception as e:
         print("Kazıma hatası:", e)
 
-    # Yedek/Test Verileri (Siteye erişim kısıtlandığında gösterilir)
     if not mac_listesi:
         mac_listesi = [
             {
