@@ -2,7 +2,7 @@ from flask import Flask, render_template_string
 import requests
 from datetime import datetime
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 def bulten_kazila():
     """
@@ -160,5 +160,5 @@ def home():
     maclar = bulten_kazila()
     return render_template_string(HTML_TEMPLATE, maclar=maclar)
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     app.run()
