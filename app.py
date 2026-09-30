@@ -2,7 +2,7 @@ from flask import Flask, render_template_string, request
 import requests
 import math
 import hashlib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
@@ -43,8 +43,11 @@ def poisson_hesapla(takim_adi):
     }
 
 def bulten_kazila():
-    bugun = datetime.now().strftime("%Y-%m-%d")
-    url = f"https://v3.football.api-sports.io/fixtures?date={bugun}"
+    bugun_str = datetime.now().strftime("%Y-%m-%d")
+    bitis_str = (datetime.now() + timedelta(days=6)).strftime("%Y-%m-%d")
+    
+    # Önümüzdeki 7 günlük maçları çeken API endpoint'i
+    url = f"https://v3.football.api-sports.io/fixtures?from={bugun_str}&to={bitis_str}"
     headers = {
         'x-apisports-key': API_FOOTBALL_KEY,
         'x-rapidapi-host': "v3.football.api-sports.io"
@@ -52,46 +55,64 @@ def bulten_kazila():
     mac_listesi = []
     
     try:
-        response = requests.get(url, headers=headers, timeout=8)
+        response = requests.get(url, headers=headers, timeout=10)
         if response.status_code == 200:
             data = response.json()
             fixtures = data.get("response", [])
             if fixtures:
-                for match in fixtures[:12]:
+                for match in fixtures[:30]: # Performans için ilk 30 maçı alalım
                     ev = match['teams']['home']['name']
                     dep = match['teams']['away']['name']
                     lig = match['league']['name']
-                    saat = match['fixture']['date'][11:16]
+                    tarih_saat = match['fixture']['date']
+                    tarih = tarih_saat[:10] # YYYY-MM-DD
+                    saat = tarih_saat[11:16] # HH:MM
+                    
                     analiz = poisson_hesapla(f"{ev}{dep}")
                     mac_listesi.append({
-                        "lig": lig, "saat": saat, "mac": f"{ev} - {dep}",
+                        "lig": lig, 
+                        "tarih": tarih, 
+                        "saat": saat, 
+                        "mac": f"{ev} - {dep}",
                         "ev_sakatlar": [f"{ev[:4]} Hücum (Cezalı)"],
                         "dep_sakatlar": [f"{dep[:4]} Defans (Şüpheli)"],
-                        "analiz_notu": f"API-Football Verisi: {ev} vs {dep} Poisson modeline sokuldu.",
-                        "iy_15_ust": analiz["iy_15_ust"], "kg_var": analiz["kg_var"],
-                        "gol_6_ust": analiz["gol_6_ust"], "skor_tahmini": analiz["skor"],
-                        "durum": "⚡ CANLI API-FOOTBALL"
+                        "analiz_notu": f"7 Günlük Bülten: {ev} ve {dep} karşılaşma analizi.",
+                        "iy_15_ust": analiz["iy_15_ust"], 
+                        "kg_var": analiz["kg_var"],
+                        "gol_6_ust": analiz["gol_6_ust"], 
+                        "skor_tahmini": analiz["skor"],
+                        "durum": "⚡ 7 GÜNLÜK BÜLTEN"
                     })
     except Exception as e:
         print("API Hatası:", e)
 
+    # API'den veri alınamazsa yedek 7 günlük örnek simülasyon listesi
     if not mac_listesi:
-        ornek_maclar = [
-            ("Real Madrid", "Manchester City", "UEFA Şampiyonlar Ligi", "22:00"),
-            ("Ajax", "Feyenoord", "Hollanda Eredivisie", "21:00"),
-            ("Bayern Munchen", "Borussia Dortmund", "Almanya Bundesliga", "19:30"),
-            ("Galatasaray", "Fenerbahçe", "Trendyol Süper Lig", "20:00")
+        ornek_takimlar = [
+            ("Real Madrid", "Manchester City", "UEFA Şampiyonlar Ligi"),
+            ("Ajax", "Feyenoord", "Hollanda Eredivisie"),
+            ("Bayern Munchen", "Borussia Dortmund", "Almanya Bundesliga"),
+            ("Galatasaray", "Fenerbahçe", "Trendyol Süper Lig"),
+            ("Barcelona", "Atletico Madrid", "İspanya La Liga"),
+            ("Arsenal", "Chelsea", "İngiltere Premier Lig"),
+            ("Inter", "AC Milan", "İtalya Serie A")
         ]
-        for ev, dep, lig, saat in ornek_maclar:
+        for i, (ev, dep, lig) in enumerate(ornek_takimlar):
+            gelecek_tarih = (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d")
             analiz = poisson_hesapla(f"{ev}{dep}")
             mac_listesi.append({
-                "lig": lig, "saat": saat, "mac": f"{ev} - {dep}",
+                "lig": lig, 
+                "tarih": gelecek_tarih, 
+                "saat": "21:00", 
+                "mac": f"{ev} - {dep}",
                 "ev_sakatlar": [f"{ev[:4]} Stoper (Sakat)"],
                 "dep_sakatlar": [f"{dep[:4]} Kaleci (Şüpheli)"],
-                "analiz_notu": "Poisson gol oranları hesaplandı.",
-                "iy_15_ust": analiz["iy_15_ust"], "kg_var": analiz["kg_var"],
-                "gol_6_ust": analiz["gol_6_ust"], "skor_tahmini": analiz["skor"],
-                "durum": "📊 POISSON ANALİZLİ MAÇ"
+                "analiz_notu": "7 günlük yedek bülten havuzundan Poisson analizi.",
+                "iy_15_ust": analiz["iy_15_ust"], 
+                "kg_var": analiz["kg_var"],
+                "gol_6_ust": analiz["gol_6_ust"], 
+                "skor_tahmini": analiz["skor"],
+                "durum": "📊 7 GÜNLÜK PLAN"
             })
 
     return mac_listesi
@@ -102,7 +123,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gol Analiz PWA - Lig Filtreli</title>
+    <title>Gol Analiz PWA - 7 Günlük Bülten</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#121212">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -117,8 +138,8 @@ HTML_TEMPLATE = """
 <body class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-warning m-0">⚽ Gol Analiz PWA</h2>
-        <span class="badge bg-success">● Filtre Modu Aktif</span>
+        <h2 class="text-warning m-0">⚽ 7 Günlük Maç Bülteni</h2>
+        <span class="badge bg-success">● 7 Günlük Mod Aktif</span>
     </div>
 
     <!-- LİG FİLTRELEME BUTONLARI -->
@@ -131,13 +152,13 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <h4 class="mt-4 mb-3">🚨 Günün Maçları & Poisson Gol Analizleri</h4>
+    <h4 class="mt-4 mb-3">🚨 Önümüzdeki 7 Günün Maçları & Poisson Analizleri</h4>
     
     {% if maclar %}
         {% for mac in maclar %}
         <div class="card card-custom p-3">
             <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted"><b>{{ mac.saat }}</b> | {{ mac.lig }}</span>
+                <span class="text-muted">📅 <b>{{ mac.tarih }}</b> - ⏰ <b>{{ mac.saat }}</b> | {{ mac.lig }}</span>
                 <span class="badge badge-gol">{{ mac.durum }}</span>
             </div>
             <h3 class="my-2 text-info">{{ mac.mac }}</h3>
@@ -182,7 +203,7 @@ HTML_TEMPLATE = """
         {% endfor %}
     {% else %}
         <div class="alert alert-dark text-center py-4">
-            <h5>Bu ligde şu an gösterilecek aktif maç bulunmuyor.</h5>
+            <h5>Seçilen ligde bu hafta oynanacak maç bulunmuyor.</h5>
         </div>
     {% endif %}
 
@@ -202,7 +223,7 @@ def home():
     # Benzersiz lig listesini oluştur
     ligler = ["Tümü"] + sorted(list(set(m['lig'] for m in tum_maclar)))
     
-    # Seçilen ligi URL'den al (varsayılan: Tümü)
+    # Seçilen ligi URL'den al
     secilen_lig = request.args.get('lig', 'Tümü')
     
     if secilen_lig != 'Tümü':
