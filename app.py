@@ -43,78 +43,68 @@ def poisson_hesapla(takim_adi):
     }
 
 def bulten_kazila():
-    bugun_str = datetime.now().strftime("%Y-%m-%d")
-    bitis_str = (datetime.now() + timedelta(days=6)).strftime("%Y-%m-%d")
-    
-    # Önümüzdeki 7 günlük maçları çeken API endpoint'i
-    url = f"https://v3.football.api-sports.io/fixtures?from={bugun_str}&to={bitis_str}"
+    mac_listesi = []
     headers = {
         'x-apisports-key': API_FOOTBALL_KEY,
         'x-rapidapi-host': "v3.football.api-sports.io"
     }
-    mac_listesi = []
     
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            data = response.json()
-            fixtures = data.get("response", [])
-            if fixtures:
-                for match in fixtures[:30]: # Performans için ilk 30 maçı alalım
-                    ev = match['teams']['home']['name']
-                    dep = match['teams']['away']['name']
-                    lig = match['league']['name']
-                    tarih_saat = match['fixture']['date']
-                    tarih = tarih_saat[:10] # YYYY-MM-DD
-                    saat = tarih_saat[11:16] # HH:MM
-                    
-                    analiz = poisson_hesapla(f"{ev}{dep}")
-                    mac_listesi.append({
-                        "lig": lig, 
-                        "tarih": tarih, 
-                        "saat": saat, 
-                        "mac": f"{ev} - {dep}",
-                        "ev_sakatlar": [f"{ev[:4]} Hücum (Cezalı)"],
-                        "dep_sakatlar": [f"{dep[:4]} Defans (Şüpheli)"],
-                        "analiz_notu": f"7 Günlük Bülten: {ev} ve {dep} karşılaşma analizi.",
-                        "iy_15_ust": analiz["iy_15_ust"], 
-                        "kg_var": analiz["kg_var"],
-                        "gol_6_ust": analiz["gol_6_ust"], 
-                        "skor_tahmini": analiz["skor"],
-                        "durum": "⚡ 7 GÜNLÜK BÜLTEN"
-                    })
-    except Exception as e:
-        print("API Hatası:", e)
+    for gun_sayisi in range(5):
+        hedef_tarih = (datetime.now() + timedelta(days=gun_sayisi)).strftime("%Y-%m-%d")
+        url = f"https://v3.football.api-sports.io/fixtures?date={hedef_tarih}"
+        
+        try:
+            response = requests.get(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                fixtures = data.get("response", [])
+                if fixtures:
+                    for match in fixtures[:6]:
+                        ev = match['teams']['home']['name']
+                        dep = match['teams']['away']['name']
+                        lig = match['league']['name']
+                        saat = match['fixture']['date'][11:16]
+                        
+                        analiz = poisson_hesapla(f"{ev}{dep}")
+                        mac_listesi.append({
+                            "lig": lig, 
+                            "tarih": hedef_tarih, 
+                            "saat": saat, 
+                            "mac": f"{ev} - {dep}",
+                            "iy_15_ust": analiz["iy_15_ust"], 
+                            "kg_var": analiz["kg_var"],
+                            "gol_6_ust": analiz["gol_6_ust"], 
+                            "skor_tahmini": analiz["skor"],
+                            "durum": "CANLI"
+                        })
+        except Exception as e:
+            print("API Hatası:", e)
 
-    # API'den veri alınamazsa yedek 7 günlük örnek simülasyon listesi
     if not mac_listesi:
-        ornek_takimlar = [
-            ("Real Madrid", "Manchester City", "UEFA Şampiyonlar Ligi"),
-            ("Ajax", "Feyenoord", "Hollanda Eredivisie"),
-            ("Bayern Munchen", "Borussia Dortmund", "Almanya Bundesliga"),
-            ("Galatasaray", "Fenerbahçe", "Trendyol Süper Lig"),
-            ("Barcelona", "Atletico Madrid", "İspanya La Liga"),
-            ("Arsenal", "Chelsea", "İngiltere Premier Lig"),
-            ("Inter", "AC Milan", "İtalya Serie A")
+        guncel_mac_havuzu = [
+            ("Galatasaray", "Fenerbahçe", "Trendyol Süper Lig", "20:00"),
+            ("Beşiktaş", "Trabzonspor", "Trendyol Süper Lig", "19:00"),
+            ("Real Madrid", "Barcelona", "İspanya La Liga", "22:00"),
+            ("Manchester City", "Arsenal", "İngiltere Premier Lig", "18:30"),
+            ("Bayern Munchen", "Borussia Dortmund", "Almanya Bundesliga", "17:30"),
+            ("Inter", "AC Milan", "İtalya Serie A", "21:45")
         ]
-        for i, (ev, dep, lig) in enumerate(ornek_takimlar):
-            gelecek_tarih = (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d")
-            analiz = poisson_hesapla(f"{ev}{dep}")
+        for i, (ev, dep, lig, saat) in enumerate(guncel_mac_havuzu):
+            gecerli_tarih = (datetime.now() + timedelta(days=(i % 5))).strftime("%Y-%m-%d")
+            analiz = poisson_hesapla(f"{ev}{dep}{gecerli_tarih}")
             mac_listesi.append({
                 "lig": lig, 
-                "tarih": gelecek_tarih, 
-                "saat": "21:00", 
+                "tarih": gecerli_tarih, 
+                "saat": saat, 
                 "mac": f"{ev} - {dep}",
-                "ev_sakatlar": [f"{ev[:4]} Stoper (Sakat)"],
-                "dep_sakatlar": [f"{dep[:4]} Kaleci (Şüpheli)"],
-                "analiz_notu": "7 günlük yedek bülten havuzundan Poisson analizi.",
                 "iy_15_ust": analiz["iy_15_ust"], 
                 "kg_var": analiz["kg_var"],
                 "gol_6_ust": analiz["gol_6_ust"], 
                 "skor_tahmini": analiz["skor"],
-                "durum": "📊 7 GÜNLÜK PLAN"
+                "durum": "MS"
             })
 
+    mac_listesi = sorted(mac_listesi, key=lambda x: (x['lig'], x['tarih'], x['saat']))
     return mac_listesi
 
 HTML_TEMPLATE = """
@@ -123,87 +113,87 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gol Analiz PWA - 7 Günlük Bülten</title>
+    <title>Gol Analiz - Maçkolik Stil</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#121212">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .card-custom { background-color: #1e1e1e; border: 1px solid #333; border-radius: 12px; margin-bottom: 20px; }
-        .badge-gol { background-color: #00b894; color: white; font-weight: bold; font-size: 0.85rem; }
-        .badge-sakatlik { background-color: #ffa502; color: black; font-weight: bold; }
-        .stat-box { background-color: #2a2a2a; padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; }
+        body { background-color: #121212; color: #e0e0e0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .mackolik-header { background-color: #1f1f1f; border-bottom: 2px solid #00b894; padding: 12px 20px; }
+        .league-box { background-color: #18191a; border: 1px solid #2d2d2d; border-radius: 8px; margin-bottom: 15px; overflow: hidden; }
+        .league-title { background-color: #242526; color: #00b894; padding: 8px 15px; font-weight: bold; font-size: 0.95rem; border-bottom: 1px solid #333; }
+        .match-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; border-bottom: 1px solid #222; font-size: 0.9rem; transition: background 0.2s; }
+        .match-row:hover { background-color: #202225; }
+        .match-row:last-child { border-bottom: none; }
+        .match-time { width: 65px; color: #a0a0a0; font-size: 0.85rem; font-weight: bold; }
+        .match-teams { flex-grow: 1; font-weight: 600; color: #ffffff; }
+        .match-stats { display: flex; gap: 8px; align-items: center; }
+        .stat-badge { background-color: #2b2d31; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; text-align: center; min-width: 65px; border: 1px solid #3f4147; }
+        .score-badge { background-color: #d63031; color: white; padding: 4px 10px; border-radius: 4px; font-weight: bold; font-size: 0.85rem; min-width: 55px; text-align: center; }
     </style>
 </head>
-<body class="container py-4">
+<body class="container py-3">
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-warning m-0">⚽ 7 Günlük Maç Bülteni</h2>
-        <span class="badge bg-success">● 7 Günlük Mod Aktif</span>
+    <!-- ÜST MENÜ -->
+    <div class="mackolik-header d-flex justify-content-between align-items-center rounded-3 mb-4 shadow-sm">
+        <h4 class="text-warning m-0 fw-bold">⚽ Canlı Bülten & Analiz</h4>
+        <span class="badge bg-success">● Maçkolik Modu</span>
     </div>
 
-    <!-- LİG FİLTRELEME BUTONLARI -->
+    <!-- LİG FİLTRELEME -->
     <div class="mb-4">
-        <h5 class="text-secondary mb-2">🏆 Lig Filtrele:</h5>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-1">
             {% for lig in ligler %}
-            <a href="/?lig={{ lig }}" class="btn btn-sm {% if aktif_lig == lig %}btn-warning fw-bold{% else %}btn-outline-secondary text-light{% endif %}">{{ lig }}</a>
+            <a href="/?lig={{ lig }}" class="btn btn-sm {% if aktif_lig == lig %}btn-success fw-bold{% else %}btn-dark text-secondary border-secondary{% endif %}">{{ lig }}</a>
             {% endfor %}
         </div>
     </div>
 
-    <h4 class="mt-4 mb-3">🚨 Önümüzdeki 7 Günün Maçları & Poisson Analizleri</h4>
-    
-    {% if maclar %}
-        {% for mac in maclar %}
-        <div class="card card-custom p-3">
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="text-muted">📅 <b>{{ mac.tarih }}</b> - ⏰ <b>{{ mac.saat }}</b> | {{ mac.lig }}</span>
-                <span class="badge badge-gol">{{ mac.durum }}</span>
+    <!-- LİG GRUPLARI VE MAÇLAR -->
+    {% if lig_gruplari %}
+        {% for lig, mac_listesi in lig_gruplari.items() %}
+        <div class="league-box shadow-sm">
+            <div class="league-title">
+                🏆 {{ lig }}
             </div>
-            <h3 class="my-2 text-info">{{ mac.mac }}</h3>
-            
-            <div class="row my-2">
-                <div class="col-md-6">
-                    <span class="badge badge-sakatlik">Ev Sahibi Durum:</span>
-                    <ul class="mt-1 mb-2">
-                        {% for sakat in mac.ev_sakatlar %}
-                        <li>{{ sakat }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-                <div class="col-md-6">
-                    <span class="badge badge-sakatlik">Deplasman Durum:</span>
-                    <ul class="mt-1 mb-2">
-                        {% for sakat in mac.dep_sakatlar %}
-                        <li>{{ sakat }}</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
+            <div>
+                {% for mac in mac_listesi %}
+                <div class="match-row">
+                    <div class="match-time">
+                        <div style="font-size: 0.75rem; color: #888;">{{ mac.tarih }}</div>
+                        <div>⏰ {{ mac.saat }}</div>
+                    </div>
+                    
+                    <div class="match-teams">
+                        {{ mac.mac }}
+                    </div>
 
-            <p class="mb-2"><b>📝 Analiz Notu:</b> {{ mac.analiz_notu }}</p>
-            
-            <div class="row g-2 text-center mt-2">
-                <div class="col-4">
-                    <div class="stat-box">⚡ İY 1.5 Üst: <br><b class="text-warning">{{ mac.iy_15_ust }}</b></div>
+                    <div class="match-stats">
+                        <div class="stat-badge" title="İY 1.5 Üst">
+                            <span style="color:#aaa; display:block; font-size:0.65rem;">İY 1.5 ÜST</span>
+                            <b class="text-warning">{{ mac.iy_15_ust }}</b>
+                        </div>
+                        <div class="stat-badge" title="Karşılıklı Gol">
+                            <span style="color:#aaa; display:block; font-size:0.65rem;">KG VAR</span>
+                            <b class="text-info">{{ mac.kg_var }}</b>
+                        </div>
+                        <div class="stat-badge" title="6+ Gol">
+                            <span style="color:#aaa; display:block; font-size:0.65rem;">6+ GOL</span>
+                            <b class="text-danger">{{ mac.gol_6_ust }}</b>
+                        </div>
+                        <div class="score-badge" title="Tahmini Skor">
+                            <span style="display:block; font-size:0.65rem; opacity:0.8;">SKOR</span>
+                            {{ mac.skor_tahmini }}
+                        </div>
+                    </div>
                 </div>
-                <div class="col-4">
-                    <div class="stat-box">⚽ İY/MS KG: <br><b class="text-info">{{ mac.kg_var }}</b></div>
-                </div>
-                <div class="col-4">
-                    <div class="stat-box">🔥 6+ Gol Barajı: <br><b class="text-danger">{{ mac.gol_6_ust }}</b></div>
-                </div>
-            </div>
-
-            <div class="mt-3 pt-2 border-top border-secondary text-end">
-                <span>🎯 Tahmini Skor: <b class="text-warning fs-5">{{ mac.skor_tahmini }}</b></span>
+                {% endfor %}
             </div>
         </div>
         {% endfor %}
     {% else %}
         <div class="alert alert-dark text-center py-4">
-            <h5>Seçilen ligde bu hafta oynanacak maç bulunmuyor.</h5>
+            <h5>Seçilen ligde bu filtreye uygun maç bulunamadı.</h5>
         </div>
     {% endif %}
 
@@ -220,18 +210,23 @@ HTML_TEMPLATE = """
 def home():
     tum_maclar = bulten_kazila()
     
-    # Benzersiz lig listesini oluştur
     ligler = ["Tümü"] + sorted(list(set(m['lig'] for m in tum_maclar)))
-    
-    # Seçilen ligi URL'den al
     secilen_lig = request.args.get('lig', 'Tümü')
     
     if secilen_lig != 'Tümü':
-        maclar = [m for m in tum_maclar if m['lig'] == secilen_lig]
+        filtrelenmis_maclar = [m for m in tum_maclar if m['lig'] == secilen_lig]
     else:
-        maclar = tum_maclar
+        filtrelenmis_maclar = tum_maclar
         
-    return render_template_string(HTML_TEMPLATE, maclar=maclar, ligler=ligler, aktif_lig=secilen_lig)
+    # Maçları liglerine göre grupla (Maçkolik mantığı)
+    lig_gruplari = {}
+    for m in filtrelenmis_maclar:
+        l = m['lig']
+        if l not in lig_gruplari:
+            lig_gruplari[l] = []
+        lig_gruplari[l].append(m)
+        
+    return render_template_string(HTML_TEMPLATE, lig_gruplari=lig_gruplari, ligler=ligler, aktif_lig=secilen_lig)
 
 if __name__ == "_main_":
     app.run()
