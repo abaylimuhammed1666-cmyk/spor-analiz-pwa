@@ -5,7 +5,7 @@ import hashlib
 from datetime import datetime
 import os
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 API_FOOTBALL_KEY = "5fe22cd6abbdddeed2ffd85f2cbc390f"
 
@@ -184,5 +184,5 @@ def home():
     maclar = bulten_kazila()
     return render_template_string(HTML_TEMPLATE, maclar=maclar)
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     app.run()
