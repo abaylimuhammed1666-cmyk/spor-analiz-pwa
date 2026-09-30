@@ -1,9 +1,8 @@
-from flask import Flask, render_template_string, send_from_directory
+from flask import Flask, render_template_string, request
 import requests
 import math
 import hashlib
 from datetime import datetime
-import os
 
 app = Flask(__name__)
 
@@ -58,7 +57,7 @@ def bulten_kazila():
             data = response.json()
             fixtures = data.get("response", [])
             if fixtures:
-                for match in fixtures[:10]:
+                for match in fixtures[:12]:
                     ev = match['teams']['home']['name']
                     dep = match['teams']['away']['name']
                     lig = match['league']['name']
@@ -103,7 +102,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gol Analiz PWA</title>
+    <title>Gol Analiz PWA - Lig Filtreli</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#121212">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -119,56 +118,73 @@ HTML_TEMPLATE = """
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="text-warning m-0">⚽ Gol Analiz PWA</h2>
-        <span class="badge bg-success">● API & PWA Aktif</span>
+        <span class="badge bg-success">● Filtre Modu Aktif</span>
+    </div>
+
+    <!-- LİG FİLTRELEME BUTONLARI -->
+    <div class="mb-4">
+        <h5 class="text-secondary mb-2">🏆 Lig Filtrele:</h5>
+        <div class="d-flex flex-wrap gap-2">
+            {% for lig in ligler %}
+            <a href="/?lig={{ lig }}" class="btn btn-sm {% if aktif_lig == lig %}btn-warning fw-bold{% else %}btn-outline-secondary text-light{% endif %}">{{ lig }}</a>
+            {% endfor %}
+        </div>
     </div>
 
     <h4 class="mt-4 mb-3">🚨 Günün Maçları & Poisson Gol Analizleri</h4>
-    {% for mac in maclar %}
-    <div class="card card-custom p-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <span class="text-muted"><b>{{ mac.saat }}</b> | {{ mac.lig }}</span>
-            <span class="badge badge-gol">{{ mac.durum }}</span>
-        </div>
-        <h3 class="my-2 text-info">{{ mac.mac }}</h3>
-        
-        <div class="row my-2">
-            <div class="col-md-6">
-                <span class="badge badge-sakatlik">Ev Sahibi Durum:</span>
-                <ul class="mt-1 mb-2">
-                    {% for sakat in mac.ev_sakatlar %}
-                    <li>{{ sakat }}</li>
-                    {% endfor %}
-                </ul>
+    
+    {% if maclar %}
+        {% for mac in maclar %}
+        <div class="card card-custom p-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="text-muted"><b>{{ mac.saat }}</b> | {{ mac.lig }}</span>
+                <span class="badge badge-gol">{{ mac.durum }}</span>
             </div>
-            <div class="col-md-6">
-                <span class="badge badge-sakatlik">Deplasman Durum:</span>
-                <ul class="mt-1 mb-2">
-                    {% for sakat in mac.dep_sakatlar %}
-                    <li>{{ sakat }}</li>
-                    {% endfor %}
-                </ul>
+            <h3 class="my-2 text-info">{{ mac.mac }}</h3>
+            
+            <div class="row my-2">
+                <div class="col-md-6">
+                    <span class="badge badge-sakatlik">Ev Sahibi Durum:</span>
+                    <ul class="mt-1 mb-2">
+                        {% for sakat in mac.ev_sakatlar %}
+                        <li>{{ sakat }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <span class="badge badge-sakatlik">Deplasman Durum:</span>
+                    <ul class="mt-1 mb-2">
+                        {% for sakat in mac.dep_sakatlar %}
+                        <li>{{ sakat }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
-        </div>
 
-        <p class="mb-2"><b>📝 Analiz Notu:</b> {{ mac.analiz_notu }}</p>
-        
-        <div class="row g-2 text-center mt-2">
-            <div class="col-4">
-                <div class="stat-box">⚡ İY 1.5 Üst: <br><b class="text-warning">{{ mac.iy_15_ust }}</b></div>
+            <p class="mb-2"><b>📝 Analiz Notu:</b> {{ mac.analiz_notu }}</p>
+            
+            <div class="row g-2 text-center mt-2">
+                <div class="col-4">
+                    <div class="stat-box">⚡ İY 1.5 Üst: <br><b class="text-warning">{{ mac.iy_15_ust }}</b></div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-box">⚽ İY/MS KG: <br><b class="text-info">{{ mac.kg_var }}</b></div>
+                </div>
+                <div class="col-4">
+                    <div class="stat-box">🔥 6+ Gol Barajı: <br><b class="text-danger">{{ mac.gol_6_ust }}</b></div>
+                </div>
             </div>
-            <div class="col-4">
-                <div class="stat-box">⚽ İY/MS KG: <br><b class="text-info">{{ mac.kg_var }}</b></div>
-            </div>
-            <div class="col-4">
-                <div class="stat-box">🔥 6+ Gol Barajı: <br><b class="text-danger">{{ mac.gol_6_ust }}</b></div>
-            </div>
-        </div>
 
-        <div class="mt-3 pt-2 border-top border-secondary text-end">
-            <span>🎯 Tahmini Skor: <b class="text-warning fs-5">{{ mac.skor_tahmini }}</b></span>
+            <div class="mt-3 pt-2 border-top border-secondary text-end">
+                <span>🎯 Tahmini Skor: <b class="text-warning fs-5">{{ mac.skor_tahmini }}</b></span>
+            </div>
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-dark text-center py-4">
+            <h5>Bu ligde şu an gösterilecek aktif maç bulunmuyor.</h5>
+        </div>
+    {% endif %}
 
     <script>
         if ('serviceWorker' in navigator) {
@@ -181,8 +197,20 @@ HTML_TEMPLATE = """
 
 @app.route("/")
 def home():
-    maclar = bulten_kazila()
-    return render_template_string(HTML_TEMPLATE, maclar=maclar)
+    tum_maclar = bulten_kazila()
+    
+    # Benzersiz lig listesini oluştur
+    ligler = ["Tümü"] + sorted(list(set(m['lig'] for m in tum_maclar)))
+    
+    # Seçilen ligi URL'den al (varsayılan: Tümü)
+    secilen_lig = request.args.get('lig', 'Tümü')
+    
+    if secilen_lig != 'Tümü':
+        maclar = [m for m in tum_maclar if m['lig'] == secilen_lig]
+    else:
+        maclar = tum_maclar
+        
+    return render_template_string(HTML_TEMPLATE, maclar=maclar, ligler=ligler, aktif_lig=secilen_lig)
 
 if __name__ == "_main_":
     app.run()
