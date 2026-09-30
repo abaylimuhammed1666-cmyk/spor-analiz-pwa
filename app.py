@@ -154,5 +154,5 @@ def home():
     maclar = bulten_kazila()
     return render_template_string(HTML_TEMPLATE, maclar=maclar)
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     app.run()
