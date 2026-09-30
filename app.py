@@ -2,7 +2,7 @@ from flask import Flask, render_template_string
 import requests
 from bs4 import BeautifulSoup
 
-app = Flask(_name_)
+app = Flask(__name__)
 
 def bulten_kazila():
     """
