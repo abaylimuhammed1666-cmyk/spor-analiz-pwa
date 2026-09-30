@@ -1,21 +1,16 @@
-from flask import Flask, render_template_string
+from flask import Flask, render_template_string, send_from_directory
 import requests
 import math
 import hashlib
 from datetime import datetime
+import os
 
-app = Flask(__name__)
+app = Flask(_name_)
 
-# API-Football Key Entegrasyonu
 API_FOOTBALL_KEY = "5fe22cd6abbdddeed2ffd85f2cbc390f"
 
 def poisson_hesapla(takim_adi):
-    """
-    Takım isminden benzersiz gol beklentisi üreterek Poisson algoritması ile
-    İY 1.5 Üst, KG Var ve 6+ Gol olasılıklarını hesaplar.
-    """
     sayi = int(hashlib.md5(takim_adi.encode()).hexdigest(), 16)
-    
     ev_lambda = 1.2 + (sayi % 150) / 100.0
     dep_lambda = 0.8 + ((sayi // 100) % 150) / 100.0
     
@@ -25,24 +20,19 @@ def poisson_hesapla(takim_adi):
     iy_15_ust_olasilik = 0.0
     kg_var_olasilik = 0.0
     toplam_6_ust_olasilik = 0.0
-    
     en_yuksek_olasilik = 0.0
     en_olasi_skor = "1 - 1"
 
     for i in range(7):
         for j in range(7):
             p = poisson(i, ev_lambda) * poisson(j, dep_lambda)
-            
             if p > en_yuksek_olasilik:
                 en_yuksek_olasilik = p
                 en_olasi_skor = f"{i} - {j}"
-                
             if i > 0 and j > 0:
                 kg_var_olasilik += p
-                
             if (i + j) >= 6:
                 toplam_6_ust_olasilik += p
-                
             if (i + j) >= 2:
                 iy_15_ust_olasilik += p * 0.65
 
@@ -56,12 +46,10 @@ def poisson_hesapla(takim_adi):
 def bulten_kazila():
     bugun = datetime.now().strftime("%Y-%m-%d")
     url = f"https://v3.football.api-sports.io/fixtures?date={bugun}"
-    
     headers = {
         'x-apisports-key': API_FOOTBALL_KEY,
         'x-rapidapi-host': "v3.football.api-sports.io"
     }
-    
     mac_listesi = []
     
     try:
@@ -69,33 +57,25 @@ def bulten_kazila():
         if response.status_code == 200:
             data = response.json()
             fixtures = data.get("response", [])
-            
             if fixtures:
-                for match in fixtures[:10]: # İlk 10 maçı al
+                for match in fixtures[:10]:
                     ev = match['teams']['home']['name']
                     dep = match['teams']['away']['name']
                     lig = match['league']['name']
-                    saat = match['fixture']['date'][11:16] # HH:MM saat formatı
-
+                    saat = match['fixture']['date'][11:16]
                     analiz = poisson_hesapla(f"{ev}{dep}")
-
                     mac_listesi.append({
-                        "lig": lig,
-                        "saat": saat,
-                        "mac": f"{ev} - {dep}",
-                        "ev_sakatlar": [f"{ev[:4]} Hücum (Cezalı/Sakat)"],
+                        "lig": lig, "saat": saat, "mac": f"{ev} - {dep}",
+                        "ev_sakatlar": [f"{ev[:4]} Hücum (Cezalı)"],
                         "dep_sakatlar": [f"{dep[:4]} Defans (Şüpheli)"],
-                        "analiz_notu": f"API-Football Verisi: {ev} vs {dep} mücadelesi Poisson gol indeksine sokuldu.",
-                        "iy_15_ust": analiz["iy_15_ust"],
-                        "kg_var": analiz["kg_var"],
-                        "gol_6_ust": analiz["gol_6_ust"],
-                        "skor_tahmini": analiz["skor"],
+                        "analiz_notu": f"API-Football Verisi: {ev} vs {dep} Poisson modeline sokuldu.",
+                        "iy_15_ust": analiz["iy_15_ust"], "kg_var": analiz["kg_var"],
+                        "gol_6_ust": analiz["gol_6_ust"], "skor_tahmini": analiz["skor"],
                         "durum": "⚡ CANLI API-FOOTBALL"
                     })
     except Exception as e:
         print("API Hatası:", e)
 
-    # Kota veya istek sınırı durumunda yedek dinamik maç verisi
     if not mac_listesi:
         ornek_maclar = [
             ("Real Madrid", "Manchester City", "UEFA Şampiyonlar Ligi", "22:00"),
@@ -106,16 +86,12 @@ def bulten_kazila():
         for ev, dep, lig, saat in ornek_maclar:
             analiz = poisson_hesapla(f"{ev}{dep}")
             mac_listesi.append({
-                "lig": lig,
-                "saat": saat,
-                "mac": f"{ev} - {dep}",
+                "lig": lig, "saat": saat, "mac": f"{ev} - {dep}",
                 "ev_sakatlar": [f"{ev[:4]} Stoper (Sakat)"],
                 "dep_sakatlar": [f"{dep[:4]} Kaleci (Şüpheli)"],
-                "analiz_notu": "Canlı Bültenden çekilen maç için Poisson gol oranları hesaplandı.",
-                "iy_15_ust": analiz["iy_15_ust"],
-                "kg_var": analiz["kg_var"],
-                "gol_6_ust": analiz["gol_6_ust"],
-                "skor_tahmini": analiz["skor"],
+                "analiz_notu": "Poisson gol oranları hesaplandı.",
+                "iy_15_ust": analiz["iy_15_ust"], "kg_var": analiz["kg_var"],
+                "gol_6_ust": analiz["gol_6_ust"], "skor_tahmini": analiz["skor"],
                 "durum": "📊 POISSON ANALİZLİ MAÇ"
             })
 
@@ -127,7 +103,9 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API-Football Canlı Bülten & Poisson PWA</title>
+    <title>Gol Analiz PWA</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#121212">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body { background-color: #121212; color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -140,8 +118,8 @@ HTML_TEMPLATE = """
 <body class="container py-4">
 
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2 class="text-warning m-0">⚽ API-Football Canlı Bülteni</h2>
-        <span class="badge bg-success">● API Key Aktif</span>
+        <h2 class="text-warning m-0">⚽ Gol Analiz PWA</h2>
+        <span class="badge bg-success">● API & PWA Aktif</span>
     </div>
 
     <h4 class="mt-4 mb-3">🚨 Günün Maçları & Poisson Gol Analizleri</h4>
@@ -192,6 +170,11 @@ HTML_TEMPLATE = """
     </div>
     {% endfor %}
 
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js');
+        }
+    </script>
 </body>
 </html>
 """
@@ -201,5 +184,5 @@ def home():
     maclar = bulten_kazila()
     return render_template_string(HTML_TEMPLATE, maclar=maclar)
 
-if __name__ == "_main_":
+if _name_ == "_main_":
     app.run()
