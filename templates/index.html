@@ -2,61 +2,38 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Yönetim Paneli</title>
+    <title>Spor Analiz Bülteni</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .form-container { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin: 20px 0; }
-        h2 { text-align: center; color: #00ffcc; margin-bottom: 20px; }
-        label { display: block; margin-top: 10px; font-size: 14px; color: #bbb; }
-        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: #fff; box-sizing: border-box; }
-        button { background: #00ffcc; color: #000; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; }
-        button:hover { background: #00cca3; }
-        .error { color: #ff4d4d; text-align: center; margin-bottom: 10px; font-size: 14px; }
-        .back { display: block; text-align: center; margin-top: 15px; color: #888; text-decoration: none; font-size: 13px; }
-        hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; padding: 20px; }
+        h1 { text-align: center; color: #00ffcc; }
+        .filter-container { text-align: center; margin-bottom: 20px; }
+        select { padding: 8px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; }
+        .match-card { background: #1e1e1e; padding: 15px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #333; }
+        .league-title { color: #00ffcc; margin-top: 20px; border-bottom: 1px solid #333; padding-bottom: 5px; }
     </style>
 </head>
 <body>
-    <div class="form-container">
-        <h2>🔒 Yetkili Maç Paneli</h2>
-        
-        {% if hata %}
-            <div class="error">{{ hata }}</div>
-        {% endif %}
-
-        <form method="POST">
-            <label><b>Admin Şifresi:</b></label>
-            <input type="password" name="sifre" placeholder="Gizli şifreni gir" required>
-            
-            <hr>
-
-            <label>Lig Adı:</label>
-            <input type="text" name="lig" placeholder="Örn: Trendyol Süper Lig">
-            
-            <label>Tarih:</label>
-            <input type="text" name="tarih" placeholder="2026-10-20">
-            
-            <label>Saat:</label>
-            <input type="text" name="saat" placeholder="20:00">
-            
-            <label>Maç (Ev - Dep):</label>
-            <input type="text" name="mac" placeholder="Galatasaray - Fenerbahçe">
-            
-            <label>Skor Tahmini:</label>
-            <input type="text" name="skor_tahmini" placeholder="2 - 1">
-            
-            <label>İY 1.5 Üst (%):</label>
-            <input type="text" name="iy_15_ust" placeholder="%60">
-            
-            <label>KG Var (%):</label>
-            <input type="text" name="kg_var" placeholder="%55">
-            
-            <label>6 Gol Üst (%):</label>
-            <input type="text" name="gol_6_ust" placeholder="%20">
-            
-            <button type="submit">Maçı Ekle</button>
+    <h1>Spor Analiz Bülteni</h1>
+    
+    <div class="filter-container">
+        <form method="GET">
+            <label>Lig Seç: </label>
+            <select name="lig" onchange="this.form.submit()">
+                {% for l in ligler %}
+                    <option value="{{ l }}" {% if l == secilen_lig %}selected{% endif %}>{{ l }}</option>
+                {% endfor %}
+            </select>
         </form>
-        <a href="/" class="back">← Ana Sayfaya Dön</a>
     </div>
+
+    {% for lig, maclar in lig_gruplari.items() %}
+        <h2 class="league-title">{{ lig }}</h2>
+        {% for m in maclar %}
+            <div class="match-card">
+                <strong>{{ m.tarih }} - {{ m.saat }}</strong> | {{ m.mac }}<br>
+                <small>Tahmin: {{ m.skor_tahmini }} | İY 1.5 Üst: {{ m.iy_1_5_ust }} | KG Var: {{ m.kg_var }} | 6 Gol Üst: {{ m.alt_ust_6_gol }}</small>
+            </div>
+        {% endfor %}
+    {% endfor %}
 </body>
 </html>
