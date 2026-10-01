@@ -3,6 +3,18 @@ from flask import Flask, render_template, request
 app = Flask(__name__)
 
 tum_maclar = [
+    # Trendyol Süper Lig
+    {"lig": "Trendyol Süper Lig", "tarih": "2026-10-02", "saat": "20:00", "mac": "Galatasaray - Fenerbahçe", "skor_tahmini": "2 - 1", "iy_1_5_ust": "%60", "kg_var": "%65", "alt_ust_6_gol": "%25"},
+    {"lig": "Trendyol Süper Lig", "tarih": "2026-10-02", "saat": "19:00", "mac": "Beşiktaş - Trabzonspor", "skor_tahmini": "1 - 1", "iy_1_5_ust": "%50", "kg_var": "%55", "alt_ust_6_gol": "%20"},
+    {"lig": "Trendyol Süper Lig", "tarih": "2026-10-03", "saat": "16:00", "mac": "Başakşehir - Samsunspor", "skor_tahmini": "2 - 0", "iy_1_5_ust": "%45", "kg_var": "%40", "alt_ust_6_gol": "%15"},
+    {"lig": "Trendyol Süper Lig", "tarih": "2026-10-03", "saat": "19:00", "mac": "Göztepe - Antalyaspor", "skor_tahmini": "1 - 2", "iy_1_5_ust": "%55", "kg_var": "%70", "alt_ust_6_gol": "%30"},
+
+    # Premier Lig
+    {"lig": "Premier Lig", "tarih": "2026-10-04", "saat": "16:00", "mac": "Arsenal - Chelsea", "skor_tahmini": "2 - 2", "iy_1_5_ust": "%70", "kg_var": "%75", "alt_ust_6_gol": "%35"},
+    {"lig": "Premier Lig", "tarih": "2026-10-04", "saat": "18:30", "mac": "Manchester City - Liverpool", "skor_tahmini": "3 - 2", "iy_1_5_ust": "%80", "kg_var": "%85", "alt_ust_6_gol": "%45"},
+    {"lig": "Premier Lig", "tarih": "2026-10-05", "saat": "16:00", "mac": "Manchester United - Tottenham", "skor_tahmini": "1 - 1", "iy_1_5_ust": "%55", "kg_var": "%60", "alt_ust_6_gol": "%20"},
+    {"lig": "Premier Lig", "tarih": "2026-10-05", "saat": "18:30", "mac": "Newcastle United - Aston Villa", "skor_tahmini": "2 - 1", "iy_1_5_ust": "%65", "kg_var": "%65", "alt_ust_6_gol": "%30"},
+
     # La Liga
     {"lig": "La Liga", "tarih": "2026-10-12", "saat": "21:00", "mac": "Real Madrid - Barcelona", "skor_tahmini": "2 - 1", "iy_1_5_ust": "%60", "kg_var": "%55", "alt_ust_6_gol": "%20"},
     {"lig": "La Liga", "tarih": "2026-10-13", "saat": "19:30", "mac": "Atletico Madrid - Real Sociedad", "skor_tahmini": "1 - 1", "iy_1_5_ust": "%50", "kg_var": "%60", "alt_ust_6_gol": "%15"},
