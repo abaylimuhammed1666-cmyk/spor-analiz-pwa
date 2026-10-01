@@ -3,7 +3,7 @@ import math
 import hashlib
 from datetime import datetime, timedelta
 
-app = Flask(if__name__)
+app = Flask(__name__)
 
 def poisson_hesapla(takim_adi):
     sayi = int(hashlib.md5(takim_adi.encode()).hexdigest(), 16)
@@ -230,5 +230,5 @@ def home():
         
     return render_template_string(HTML_TEMPLATE, lig_gruplari=lig_gruplari, ligler=ligler, aktif_lig=secilen_lig)
 
-if__name__== "_main_":
+if __name__ == "__main__":
     app.run()
