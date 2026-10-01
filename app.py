@@ -1,146 +1,65 @@
-from flask import Flask, render_template, request, redirect, url_for
-import sqlite3
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-def init_db():
-    conn = sqlite3.connect('matches.db')
-    cursor = conn.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS matches (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            lig TEXT,
-            tarih TEXT,
-            saat TEXT,
-            mac TEXT,
-            skor_tahmini TEXT,
-            iy_15_ust TEXT,
-            kg_var TEXT,
-            gol_6_ust TEXT
-        )
-    ''')
-    cursor.execute('SELECT COUNT(*) FROM matches')
-    if cursor.fetchone()[0] == 0:
-        initial_matches = [
-            # Trendyol Süper Lig
-            ("Trendyol Süper Lig", "2026-10-09", "20:00", "Galatasaray - Kasımpaşa", "2 - 1", "%53", "%44", "%17"),
-            ("Trendyol Süper Lig", "2026-10-10", "16:00", "Samsunspor - Trabzonspor", "1 - 2", "%50", "%47", "%20"),
-            ("Trendyol Süper Lig", "2026-10-10", "19:00", "Çaykur Rizespor - Fenerbahçe", "0 - 2", "%66", "%43", "%17"),
-            ("Trendyol Süper Lig", "2026-10-11", "13:30", "Konyaspor - Başakşehir", "1 - 1", "%84", "%84", "%44"),
-            ("Trendyol Süper Lig", "2026-10-11", "19:00", "Beşiktaş - Kocaelispor", "1 - 1", "%67", "%63", "%30"),
-            ("Trendyol Süper Lig", "2026-10-12", "20:00", "Eyüpspor - Göztepe", "1 - 2", "%58", "%71", "%36"),
-            ("Trendyol Süper Lig", "2026-10-17", "16:00", "Gençlerbirliği - Galatasaray", "1 - 2", "%60", "%77", "%40"),
-            ("Trendyol Süper Lig", "2026-10-17", "19:00", "Fenerbahçe - Alanyaspor", "3 - 1", "%72", "%55", "%25"),
-            ("Trendyol Süper Lig", "2026-10-18", "19:00", "Trabzonspor - Antalyaspor", "2 - 0", "%65", "%40", "%15"),
-            ("Trendyol Süper Lig", "2026-10-19", "20:00", "Adana Demirspor - Beşiktaş", "1 - 3", "%78", "%68", "%35"),
-
-            # Premier Lig
-            ("Premier Lig", "2026-10-11", "16:00", "Arsenal - Chelsea", "2 - 2", "%75", "%70", "%35"),
-            ("Premier Lig", "2026-10-11", "18:30", "Manchester City - Liverpool", "3 - 2", "%88", "%82", "%50"),
-            ("Premier Lig", "2026-10-12", "16:00", "Manchester United - Tottenham", "2 - 1", "%68", "%65", "%28"),
-            ("Premier Lig", "2026-10-12", "18:30", "Newcastle United - Aston Villa", "1 - 1", "%62", "%60", "%20"),
-            ("Premier Lig", "2026-10-18", "16:00", "Liverpool - Everton", "2 - 0", "%70", "%45", "%22"),
-            ("Premier Lig", "2026-10-18", "18:30", "Chelsea - Manchester United", "2 - 2", "%76", "%74", "%38"),
-
-            # La Liga
-            ("La Liga", "2026-10-12", "21:00", "Real Madrid - Barcelona", "2 - 1", "%80", "%78", "%40"),
-            ("La Liga", "2026-10-13", "19:30", "Atletico Madrid - Real Sociedad", "1 - 0", "%52", "%42", "%12"),
-            ("La Liga", "2026-10-13", "22:00", "Villarreal - Valencia", "2 - 2", "%74", "%72", "%30"),
-            ("La Liga", "2026-10-19", "19:00", "Barcelona - Athletic Bilbao", "3 - 1", "%82", "%60", "%32"),
-
-            # Serie A
-            ("Serie A", "2026-10-14", "19:00", "Inter - Juventus", "1 - 1", "%58", "%62", "%18"),
-            ("Serie A", "2026-10-14", "21:45", "AC Milan - Napoli", "2 - 1", "%70", "%68", "%25"),
-            ("Serie A", "2026-10-15", "21:45", "Roma - Lazio", "1 - 2", "%65", "%70", "%22"),
-            ("Serie A", "2026-10-20", "20:00", "Atalanta - Fiorentina", "2 - 2", "%79", "%80", "%35"),
-
-            # Bundesliga
-            ("Bundesliga", "2026-10-15", "16:30", "Bayern Munich - Borussia Dortmund", "3 - 2", "%90", "%85", "%55"),
-            ("Bundesliga", "2026-10-15", "19:30", "RB Leipzig - Bayer Leverkusen", "2 - 2", "%82", "%81", "%45"),
-            ("Bundesliga", "2026-10-21", "17:30", "Stuttgart - Eintracht Frankfurt", "2 - 1", "%75", "%70", "%30")
-        ]
-        cursor.executemany('''
-            INSERT INTO matches (lig, tarih, saat, mac, skor_tahmini, iy_15_ust, kg_var, gol_6_ust)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        ''', initial_matches)
-        conn.commit()
-    conn.close()
-
-init_db()
-
 @app.route("/")
 def home():
-    search_query = request.args.get("q", "")
+    # Hiçbir veritabanı veya karmaşa yok, doğrudan çalışan dev bülten
+    tum_maclar = [
+        # Trendyol Süper Lig
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-09", "saat": "20:00", "mac": "Galatasaray - Kasımpaşa", "skor_tahmini": "2 - 1", "iy_15_ust": "%53", "kg_var": "%44", "gol_6_ust": "%17"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-10", "saat": "16:00", "mac": "Samsunspor - Trabzonspor", "skor_tahmini": "1 - 2", "iy_15_ust": "%50", "kg_var": "%47", "gol_6_ust": "%20"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-10", "saat": "19:00", "mac": "Çaykur Rizespor - Fenerbahçe", "skor_tahmini": "0 - 2", "iy_15_ust": "%66", "kg_var": "%43", "gol_6_ust": "%17"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-11", "saat": "13:30", "mac": "Konyaspor - Başakşehir", "skor_tahmini": "1 - 1", "iy_15_ust": "%84", "kg_var": "%84", "gol_6_ust": "%44"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-11", "saat": "19:00", "mac": "Beşiktaş - Kocaelispor", "skor_tahmini": "1 - 1", "iy_15_ust": "%67", "kg_var": "%63", "gol_6_ust": "%30"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-12", "saat": "20:00", "mac": "Eyüpspor - Göztepe", "skor_tahmini": "1 - 2", "iy_15_ust": "%58", "kg_var": "%71", "gol_6_ust": "%36"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-17", "saat": "16:00", "mac": "Gençlerbirliği - Galatasaray", "skor_tahmini": "1 - 2", "iy_15_ust": "%60", "kg_var": "%77", "gol_6_ust": "%40"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-17", "saat": "19:00", "mac": "Fenerbahçe - Alanyaspor", "skor_tahmini": "3 - 1", "iy_15_ust": "%72", "kg_var": "%55", "gol_6_ust": "%25"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-18", "saat": "19:00", "mac": "Trabzonspor - Antalyaspor", "skor_tahmini": "2 - 0", "iy_15_ust": "%65", "kg_var": "%40", "gol_6_ust": "%15"},
+        {"lig": "Trendyol Süper Lig", "tarih": "2026-10-19", "saat": "20:00", "mac": "Adana Demirspor - Beşiktaş", "skor_tahmini": "1 - 3", "iy_15_ust": "%78", "kg_var": "%68", "gol_6_ust": "%35"},
+
+        # Premier Lig
+        {"lig": "Premier Lig", "tarih": "2026-10-11", "saat": "16:00", "mac": "Arsenal - Chelsea", "skor_tahmini": "2 - 2", "iy_15_ust": "%75", "kg_var": "%70", "gol_6_ust": "%35"},
+        {"lig": "Premier Lig", "tarih": "2026-10-11", "saat": "18:30", "mac": "Manchester City - Liverpool", "skor_tahmini": "3 - 2", "iy_15_ust": "%88", "kg_var": "%82", "gol_6_ust": "%50"},
+        {"lig": "Premier Lig", "tarih": "2026-10-12", "saat": "16:00", "mac": "Manchester United - Tottenham", "skor_tahmini": "2 - 1", "iy_15_ust": "%68", "kg_var": "%65", "gol_6_ust": "%28"},
+        {"lig": "Premier Lig", "tarih": "2026-10-12", "saat": "18:30", "mac": "Newcastle United - Aston Villa", "skor_tahmini": "1 - 1", "iy_15_ust": "%62", "kg_var": "%60", "gol_6_ust": "%20"},
+        {"lig": "Premier Lig", "tarih": "2026-10-18", "saat": "16:00", "mac": "Liverpool - Everton", "skor_tahmini": "2 - 0", "iy_15_ust": "%70", "kg_var": "%45", "gol_6_ust": "%22"},
+        {"lig": "Premier Lig", "tarih": "2026-10-18", "saat": "18:30", "mac": "Chelsea - Manchester United", "skor_tahmini": "2 - 2", "iy_15_ust": "%76", "kg_var": "%74", "gol_6_ust": "%38"},
+
+        # La Liga
+        {"lig": "La Liga", "tarih": "2026-10-12", "saat": "21:00", "mac": "Real Madrid - Barcelona", "skor_tahmini": "2 - 1", "iy_15_ust": "%80", "kg_var": "%78", "gol_6_ust": "%40"},
+        {"lig": "La Liga", "tarih": "2026-10-13", "saat": "19:30", "mac": "Atletico Madrid - Real Sociedad", "skor_tahmini": "1 - 0", "iy_15_ust": "%52", "kg_var": "%42", "gol_6_ust": "%12"},
+        {"lig": "La Liga", "tarih": "2026-10-13", "saat": "22:00", "mac": "Villarreal - Valencia", "skor_tahmini": "2 - 2", "iy_15_ust": "%74", "kg_var": "%72", "gol_6_ust": "%30"},
+        {"lig": "La Liga", "tarih": "2026-10-19", "saat": "19:00", "mac": "Barcelona - Athletic Bilbao", "skor_tahmini": "3 - 1", "iy_15_ust": "%82", "kg_var": "%60", "gol_6_ust": "%32"},
+
+        # Serie A
+        {"lig": "Serie A", "tarih": "2026-10-14", "saat": "19:00", "mac": "Inter - Juventus", "skor_tahmini": "1 - 1", "iy_15_ust": "%58", "kg_var": "%62", "gol_6_ust": "%18"},
+        {"lig": "Serie A", "tarih": "2026-10-14", "saat": "21:45", "mac": "AC Milan - Napoli", "skor_tahmini": "2 - 1", "iy_15_ust": "%70", "kg_var": "%68", "gol_6_ust": "%25"},
+        {"lig": "Serie A", "tarih": "2026-10-15", "saat": "21:45", "mac": "Roma - Lazio", "skor_tahmini": "1 - 2", "iy_15_ust": "%65", "kg_var": "%70", "gol_6_ust": "%22"},
+        {"lig": "Serie A", "tarih": "2026-10-20", "saat": "20:00", "mac": "Atalanta - Fiorentina", "skor_tahmini": "2 - 2", "iy_15_ust": "%79", "kg_var": "%80", "gol_6_ust": "%35"},
+
+        # Bundesliga
+        {"lig": "Bundesliga", "tarih": "2026-10-15", "saat": "16:30", "mac": "Bayern Munich - Borussia Dortmund", "skor_tahmini": "3 - 2", "iy_15_ust": "%90", "kg_var": "%85", "gol_6_ust": "%55"},
+        {"lig": "Bundesliga", "tarih": "2026-10-15", "saat": "19:30", "mac": "RB Leipzig - Bayer Leverkusen", "skor_tahmini": "2 - 2", "iy_15_ust": "%82", "kg_var": "%81", "gol_6_ust": "%45"},
+        {"lig": "Bundesliga", "tarih": "2026-10-21", "saat": "17:30", "mac": "Stuttgart - Eintracht Frankfurt", "skor_tahmini": "2 - 1", "iy_15_ust": "%75", "kg_var": "%70", "gol_6_ust": "%30"}
+    ]
+
     secilen_lig = request.args.get("lig", "Tümü")
-    
-    conn = sqlite3.connect('matches.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('SELECT DISTINCT lig FROM matches')
-    ligler = ["Tümü"] + [row[0] for row in cursor.fetchall()]
-    
-    query = 'SELECT * FROM matches WHERE 1=1'
-    params = []
-    
-    if secilen_lig != "Tümü":
-        query += ' AND lig = ?'
-        params.append(secilen_lig)
-        
-    if search_query:
-        query += ' AND mac LIKE ?'
-        params.append(f'%{search_query}%')
-        
-    cursor.execute(query, params)
-    rows = cursor.fetchall()
-    conn.close()
-    
-    tum_maclar = []
-    for r in rows:
-        tum_maclar.append({
-            "id": r[0], "lig": r[1], "tarih": r[2], "saat": r[3], 
-            "mac": r[4], "skor_tahmini": r[5], "iy_15_ust": r[6], 
-            "kg_var": r[7], "gol_6_ust": r[8]
-        })
-        
+    ligler = ["Tümü"] + sorted(list(set(m["lig"] for m in tum_maclar)))
+
+    if secilen_lig == "Tümü":
+        filtrelenmis_maclar = tum_maclar
+    else:
+        filtrelenmis_maclar = [m for m in tum_maclar if m["lig"] == secilen_lig]
+
     lig_gruplari = {}
-    for m in tum_maclar:
+    for m in filtrelenmis_maclar:
         l = m["lig"]
         if l not in lig_gruplari:
             lig_gruplari[l] = []
         lig_gruplari[l].append(m)
 
-    return render_template("index.html", ligler=ligler, secilen_lig=secilen_lig, lig_gruplari=lig_gruplari, search_query=search_query)
-
-@app.route("/admin", methods=["GET", "POST"])
-def admin():
-    hata = None
-    if request.method == "POST":
-        girilen_sifre = request.form.get("sifre")
-        OGRI_SIFRE = "muhammed123" 
-        
-        if girilen_sifre != OGRI_SIFRE:
-            hata = "Hatalı şifre! Sadece yetkili kişi ekleyebilir."
-        else:
-            lig = request.form.get("lig")
-            tarih = request.form.get("tarih")
-            saat = request.form.get("saat")
-            mac = request.form.get("mac")
-            skor_tahmini = request.form.get("skor_tahmini")
-            iy_15_ust = request.form.get("iy_15_ust")
-            kg_var = request.form.get("kg_var")
-            gol_6_ust = request.form.get("gol_6_ust")
-            
-            conn = sqlite3.connect('matches.db')
-            cursor = conn.cursor()
-            cursor.execute('''
-                INSERT INTO matches (lig, tarih, saat, mac, skor_tahmini, iy_15_ust, kg_var, gol_6_ust)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (lig, tarih, saat, mac, skor_tahmini, iy_15_ust, kg_var, gol_6_ust))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('home'))
-            
-    return render_template("admin.html", hata=hata)
+    return render_template("index.html", ligler=ligler, secilen_lig=secilen_lig, lig_gruplari=lig_gruplari)
 
 if __name__ == "__main__":
     app.run(debug=True)
