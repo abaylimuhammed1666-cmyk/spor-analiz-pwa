@@ -97,7 +97,6 @@ def bulten_kazila():
             gunluk_maclar = ana_maclar[:4]
             
         for lig, ev, dep, saat in gunluk_maclar:
-            # Her gün için dinamik hash ile değişen simülasyon sonuçları
             analiz = poisson_hesapla(f"{ev}{dep}{hedef_tarih}")
             
             mac_listesi.append({
@@ -141,13 +140,11 @@ HTML_TEMPLATE = """
 </head>
 <body class="container py-3">
 
-    <!-- ÜST MENÜ -->
     <div class="mackolik-header d-flex justify-content-between align-items-center rounded-3 mb-4 shadow-sm">
         <h4 class="text-warning m-0 fw-bold">⚽ Canlı İddaa & Analiz Bülteni</h4>
         <span class="badge bg-success">● Otomatik Güncel Bülten</span>
     </div>
 
-    <!-- LİG FİLTRELEME -->
     <div class="mb-4">
         <div class="d-flex flex-wrap gap-1">
             {% for lig in ligler %}
@@ -156,7 +153,6 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- LİG GRUPLARI VE MAÇLAR -->
     {% if lig_gruplari %}
         {% for lig, mac_listesi in lig_gruplari.items() %}
         <div class="league-box shadow-sm">
