@@ -1,28 +1,6 @@
- from flask import Flask, render_template, request
-import requests
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
-
-def gercek_maclari_getir():
-  try:
-    # Ücretsiz açık futbol veri kaynağı üzerinden güncel maçları çekiyoruz
-    url = "https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4328"
-    response = requests.get(url, timeout=5)
-    data = response.json()
-
-    mac_listesi = []
-    if "events" in data and data["events"]:
-      for event in data["events"]:
-        mac_listesi.append({
-            "lig": event.get("strLeague", "Premier Lig"),
-            "tarih": event.get("dateEvent", "2026-10-01"),
-            "saat": event.get("strTime", "20:00")[:5],
-            "mac": (
-                f"{event.get('strHomeTeam', 'Ev Sahibi')} -"
-                f" {event.get('s…
-[11:14, 01.10.2026] Muhammed: from flask import Flask, render_template, request
-
-app = Flask(_name_)
 
 @app.route("/")
 def home():
