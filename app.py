@@ -1,4 +1,4 @@
-[11:08, 01.10.2026] Muhammed: from flask import Flask, render_template, request
+ from flask import Flask, render_template, request
 import requests
 
 app = Flask(__name__)
