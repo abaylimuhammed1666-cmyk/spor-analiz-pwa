@@ -4,41 +4,92 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Spor Analiz PWA</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='sw.js') }}"> <!-- Veya varsa stil dosyan -->
     <style>
-        body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 20px; }
-        h1 { text-align: center; color: #00ffcc; }
-        .lig-secici { text-align: center; margin-bottom: 20px; }
-        .lig-secici a { color: #fff; background: #333; padding: 8px 15px; margin: 5px; text-decoration: none; border-radius: 5px; display: inline-block; }
-        .lig-secici a:hover { background: #00ffcc; color: #000; }
-        .mac-karti { background: #1e1e1e; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #00ffcc; }
-        .mac-baslik { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
-        .tahmin { color: #aaa; font-size: 14px; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+            margin: 0; 
+            padding: 15px; 
+        }
+        h1 { text-align: center; color: #38bdf8; font-size: 24px; margin-bottom: 20px; }
+        
+        .lig-secici { 
+            display: flex; 
+            overflow-x: auto; 
+            gap: 8px; 
+            padding-bottom: 10px; 
+            margin-bottom: 20px; 
+            scrollbar-width: none;
+        }
+        .lig-secici::-webkit-scrollbar { display: none; }
+        .lig-secici a { 
+            color: #e2e8f0; 
+            background: #1e293b; 
+            padding: 8px 14px; 
+            text-decoration: none; 
+            border-radius: 20px; 
+            font-size: 13px; 
+            white-space: nowrap;
+            border: 1px solid #334155;
+            transition: 0.2s;
+        }
+        .lig-secici a:hover, .lig-secici a.aktif { background: #38bdf8; color: #0f172a; font-weight: bold; }
+
+        .lig-baslik { color: #facc15; font-size: 16px; margin: 25px 0 10px 0; border-bottom: 2px solid #334155; padding-bottom: 5px; }
+
+        .mac-karti { 
+            background: #1e293b; 
+            padding: 14px; 
+            margin: 10px 0; 
+            border-radius: 12px; 
+            border: 1px solid #334155;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .mac-ust { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
+        .mac-takimlar { font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #fff; }
+        
+        .tahmin-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 8px; 
+            background: #0f172a; 
+            padding: 10px; 
+            border-radius: 8px; 
+            font-size: 12px;
+        }
+        .tahmin-item { display: flex; justify-content: space-between; color: #cbd5e1; }
+        .tahmin-item span { font-weight: bold; color: #38bdf8; }
+        .skor-kutusu { grid-column: span 2; text-align: center; background: #1e293b; padding: 6px; border-radius: 6px; font-size: 14px; margin-bottom: 4px; }
+        .skor-kutusu b { color: #4ade80; font-size: 16px; }
     </style>
 </head>
 <body>
 
-    <h1>Spor Analiz Bülteni</h1>
+    <h1>⚽ Spor Analiz Bülteni</h1>
 
     <div class="lig-secici">
         {% for l in ligler %}
-            <a href="/?lig={{ l }}">{{ l }}</a>
+            <a href="/?lig={{ l }}" class="{% if secilen_lig == l %}aktif{% endif %}">{{ l }}</a>
         {% endfor %}
     </div>
 
-    <hr style="border-color: #333;">
-
     {% for lig_adi, maclar in lig_gruplari.items() %}
-        <h2 style="color: #ffcc00; margin-top: 30px;">🏆 {{ lig_adi }} ({{ maclar|length }} Maç)</h2>
+        <div class="lig-baslik">🏆 {{ lig_adi }} <span style="font-size:12px; color:#94a3b8;">({{ maclar|length }} Maç)</span></div>
         {% for m in maclar %}
             <div class="mac-karti">
-                <div style="font-size: 12px; color: #888;">📅 {{ m.tarih }} ⏰ {{ m.saat }}</div>
-                <div class="mac-baslik">⚽ {{ m.mac }}</div>
-                <div class="tahmin">
-                    Skor Tahmini: <b style="color:#00ffcc;">{{ m.skor_tahmini }}</b> | 
-                    İy 1.5 Üst: <b>{{ m.iy_15_ust }}</b> | 
-                    KG Var: <b>{{ m.kg_var }}</b> | 
-                    6+ Gol: <b>{{ m.gol_6_ust }}</b>
+                <div class="mac-ust">
+                    <span>📅 {{ m.tarih }}</span>
+                    <span>⏰ {{ m.saat }}</span>
+                </div>
+                <div class="mac-takimlar">⚡ {{ m.mac }}</div>
+                
+                <div class="tahmin-grid">
+                    <div class="skor-kutusu">Skor Tahmini: <b>{{ m.skor_tahmini }}</b></div>
+                    <div class="tahmin-item">İy 1.5 Üst: <span>{{ m.iy_15_ust }}</span></div>
+                    <div class="tahmin-item">KG Var: <span>{{ m.kg_var }}</span></div>
+                    <div class="tahmin-item" style="grid-column: span 2;">6+ Gol: <span>{{ m.gol_6_ust }}</span></div>
                 </div>
             </div>
         {% endfor %}
