@@ -3,7 +3,7 @@ import math
 import hashlib
 from datetime import datetime, timedelta
 
-app = Flask(__name__)
+app = Flask(if__name__)
 
 def poisson_hesapla(takim_adi):
     sayi = int(hashlib.md5(takim_adi.encode()).hexdigest(), 16)
@@ -42,7 +42,7 @@ def poisson_hesapla(takim_adi):
 def bulten_kazila():
     mac_listesi = []
     
-    # Sürekli güncel kalacak zengin maç havuzu (Lig, Ev Sahibi, Deplasman, Saat)
+    # Genişletilmiş güncel maç havuzu
     ana_maclar = [
         # Trendyol Süper Lig
         ("Trendyol Süper Lig", "Galatasaray", "Fenerbahçe", "20:00"),
@@ -86,17 +86,18 @@ def bulten_kazila():
         ("Fransa Ligue 1", "Lyon", "Lille", "18:00")
     ]
 
-    # Önümüzdeki 7 günün tarihlerine bu maçları akıllıca dağıtıyoruz
+    # Gerçek sistem saati baz alınarak haftanın günlerine dinamik dağıtım
+    bugun = datetime.now()
+    
     for gun_index in range(7):
-        hedef_tarih = (datetime.now() + timedelta(days=gun_index)).strftime("%Y-%m-%d")
+        hedef_tarih = (bugun + timedelta(days=gun_index)).strftime("%Y-%m-%d")
         
-        # Her gün için havuzdan belirli maçları seçelim
         gunluk_maclar = ana_maclar[gun_index * 4 : (gun_index + 1) * 4]
         if not gunluk_maclar:
-            gunluk_maclar = ana_maclar[:4] # Liste biterse baştan al
+            gunluk_maclar = ana_maclar[:4]
             
         for lig, ev, dep, saat in gunluk_maclar:
-            # Benzersiz simülasyon hash üretimi için tarih ve takım isimleri birleştirilir
+            # Her gün için dinamik hash ile değişen simülasyon sonuçları
             analiz = poisson_hesapla(f"{ev}{dep}{hedef_tarih}")
             
             mac_listesi.append({
@@ -119,7 +120,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gol Analiz - Maçkolik Canlı Bülten</title>
+    <title>Gol Analiz - Canlı İddaa & Analiz Bülteni</title>
     <link rel="manifest" href="/static/manifest.json">
     <meta name="theme-color" content="#121212">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -233,5 +234,5 @@ def home():
         
     return render_template_string(HTML_TEMPLATE, lig_gruplari=lig_gruplari, ligler=ligler, aktif_lig=secilen_lig)
 
-if __name__ == "_main_":
+if__name__== "_main_":
     app.run()
