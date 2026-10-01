@@ -2,98 +2,61 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spor Analiz PWA</title>
+    <title>Yönetim Paneli</title>
     <style>
-        * { box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: #0f172a; 
-            color: #f8fafc; 
-            margin: 0; 
-            padding: 15px; 
-        }
-        h1 { text-align: center; color: #38bdf8; font-size: 24px; margin-bottom: 20px; }
-        
-        .lig-secici { 
-            display: flex; 
-            overflow-x: auto; 
-            gap: 8px; 
-            padding-bottom: 10px; 
-            margin-bottom: 20px; 
-            scrollbar-width: none;
-        }
-        .lig-secici::-webkit-scrollbar { display: none; }
-        .lig-secici a { 
-            color: #e2e8f0; 
-            background: #1e293b; 
-            padding: 8px 14px; 
-            text-decoration: none; 
-            border-radius: 20px; 
-            font-size: 13px; 
-            white-space: nowrap;
-            border: 1px solid #334155;
-            transition: 0.2s;
-        }
-        .lig-secici a:hover, .lig-secici a.aktif { background: #38bdf8; color: #0f172a; font-weight: bold; }
-
-        .lig-baslik { color: #facc15; font-size: 16px; margin: 25px 0 10px 0; border-bottom: 2px solid #334155; padding-bottom: 5px; }
-
-        .mac-karti { 
-            background: #1e293b; 
-            padding: 14px; 
-            margin: 10px 0; 
-            border-radius: 12px; 
-            border: 1px solid #334155;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        .mac-ust { display: flex; justify-content: space-between; font-size: 12px; color: #94a3b8; margin-bottom: 8px; }
-        .mac-takimlar { font-weight: bold; font-size: 16px; margin-bottom: 12px; color: #fff; }
-        
-        .tahmin-grid { 
-            display: grid; 
-            grid-template-columns: repeat(2, 1fr); 
-            gap: 8px; 
-            background: #0f172a; 
-            padding: 10px; 
-            border-radius: 8px; 
-            font-size: 12px;
-        }
-        .tahmin-item { display: flex; justify-content: space-between; color: #cbd5e1; }
-        .tahmin-item span { font-weight: bold; color: #38bdf8; }
-        .skor-kutusu { grid-column: span 2; text-align: center; background: #1e293b; padding: 6px; border-radius: 6px; font-size: 14px; margin-bottom: 4px; }
-        .skor-kutusu b { color: #4ade80; font-size: 16px; }
+        body { font-family: Arial, sans-serif; background: #121212; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .form-container { background: #1e1e1e; padding: 25px; border-radius: 12px; width: 400px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin: 20px 0; }
+        h2 { text-align: center; color: #00ffcc; margin-bottom: 20px; }
+        label { display: block; margin-top: 10px; font-size: 14px; color: #bbb; }
+        input, button { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #333; background: #2a2a2a; color: #fff; box-sizing: border-box; }
+        button { background: #00ffcc; color: #000; font-weight: bold; margin-top: 20px; cursor: pointer; border: none; }
+        button:hover { background: #00cca3; }
+        .error { color: #ff4d4d; text-align: center; margin-bottom: 10px; font-size: 14px; }
+        .back { display: block; text-align: center; margin-top: 15px; color: #888; text-decoration: none; font-size: 13px; }
+        hr { border: 0; border-top: 1px solid #333; margin: 20px 0; }
     </style>
 </head>
 <body>
+    <div class="form-container">
+        <h2>🔒 Yetkili Maç Paneli</h2>
+        
+        {% if hata %}
+            <div class="error">{{ hata }}</div>
+        {% endif %}
 
-    <h1>⚽ Spor Analiz Bülteni</h1>
+        <form method="POST">
+            <label><b>Admin Şifresi:</b></label>
+            <input type="password" name="sifre" placeholder="Gizli şifreni gir" required>
+            
+            <hr>
 
-    <div class="lig-secici">
-        {% for l in ligler %}
-            <a href="/?lig={{ l }}" class="{% if secilen_lig == l %}aktif{% endif %}">{{ l }}</a>
-        {% endfor %}
+            <label>Lig Adı:</label>
+            <input type="text" name="lig" placeholder="Örn: Trendyol Süper Lig">
+            
+            <label>Tarih:</label>
+            <input type="text" name="tarih" placeholder="2026-10-20">
+            
+            <label>Saat:</label>
+            <input type="text" name="saat" placeholder="20:00">
+            
+            <label>Maç (Ev - Dep):</label>
+            <input type="text" name="mac" placeholder="Galatasaray - Fenerbahçe">
+            
+            <label>Skor Tahmini:</label>
+            <input type="text" name="skor_tahmini" placeholder="2 - 1">
+            
+            <label>İY 1.5 Üst (%):</label>
+            <input type="text" name="iy_15_ust" placeholder="%60">
+            
+            <label>KG Var (%):</label>
+            <input type="text" name="kg_var" placeholder="%55">
+            
+            <label>6 Gol Üst (%):</label>
+            <input type="text" name="gol_6_ust" placeholder="%20">
+            
+            <button type="submit">Maçı Ekle</button>
+        </form>
+        <a href="/" class="back">← Ana Sayfaya Dön</a>
     </div>
-
-    {% for lig_adi, maclar in lig_gruplari.items() %}
-        <div class="lig-baslik">🏆 {{ lig_adi }} <span style="font-size:12px; color:#94a3b8;">({{ maclar|length }} Maç)</span></div>
-        {% for m in maclar %}
-            <div class="mac-karti">
-                <div class="mac-ust">
-                    <span>📅 {{ m.tarih }}</span>
-                    <span>⏰ {{ m.saat }}</span>
-                </div>
-                <div class="mac-takimlar">⚡ {{ m.mac }}</div>
-                
-                <div class="tahmin-grid">
-                    <div class="skor-kutusu">Skor Tahmini: <b>{{ m.skor_tahmini }}</b></div>
-                    <div class="tahmin-item">İy 1.5 Üst: <span>{{ m.iy_15_ust }}</span></div>
-                    <div class="tahmin-item">KG Var: <span>{{ m.kg_var }}</span></div>
-                    <div class="tahmin-item" style="grid-column: span 2;">6+ Gol: <span>{{ m.gol_6_ust }}</span></div>
-                </div>
-            </div>
-        {% endfor %}
-    {% endfor %}
-
 </body>
 </html>
