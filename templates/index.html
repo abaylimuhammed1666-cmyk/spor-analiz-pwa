@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spor Analiz PWA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='sw.js') }}"> <!-- Veya varsa stil dosyan -->
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #fff; margin: 0; padding: 20px; }
+        h1 { text-align: center; color: #00ffcc; }
+        .lig-secici { text-align: center; margin-bottom: 20px; }
+        .lig-secici a { color: #fff; background: #333; padding: 8px 15px; margin: 5px; text-decoration: none; border-radius: 5px; display: inline-block; }
+        .lig-secici a:hover { background: #00ffcc; color: #000; }
+        .mac-karti { background: #1e1e1e; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 5px solid #00ffcc; }
+        .mac-baslik { font-weight: bold; font-size: 18px; margin-bottom: 5px; }
+        .tahmin { color: #aaa; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <h1>Spor Analiz Bülteni</h1>
+
+    <div class="lig-secici">
+        {% for l in ligler %}
+            <a href="/?lig={{ l }}">{{ l }}</a>
+        {% endfor %}
+    </div>
+
+    <hr style="border-color: #333;">
+
+    {% for lig_adi, maclar in lig_gruplari.items() %}
+        <h2 style="color: #ffcc00; margin-top: 30px;">🏆 {{ lig_adi }} ({{ maclar|length }} Maç)</h2>
+        {% for m in maclar %}
+            <div class="mac-karti">
+                <div style="font-size: 12px; color: #888;">📅 {{ m.tarih }} ⏰ {{ m.saat }}</div>
+                <div class="mac-baslik">⚽ {{ m.mac }}</div>
+                <div class="tahmin">
+                    Skor Tahmini: <b style="color:#00ffcc;">{{ m.skor_tahmini }}</b> | 
+                    İy 1.5 Üst: <b>{{ m.iy_15_ust }}</b> | 
+                    KG Var: <b>{{ m.kg_var }}</b> | 
+                    6+ Gol: <b>{{ m.gol_6_ust }}</b>
+                </div>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+</body>
+</html>
